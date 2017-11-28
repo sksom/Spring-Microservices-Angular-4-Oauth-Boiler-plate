@@ -1,13 +1,18 @@
 package com.gift.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 public class Item implements Serializable {
@@ -29,6 +34,10 @@ public class Item implements Serializable {
 
 	private String brand;
 
+	@ManyToMany(mappedBy = "registryItemList")
+	@JsonIgnore
+	private List<Registry> registryList = new ArrayList<Registry>();
+
 	public Item(String name, String category, double price, String imageUrl, String brand) {
 		super();
 		this.name = name;
@@ -40,6 +49,14 @@ public class Item implements Serializable {
 
 	public Item() {
 		super();
+	}
+
+	public List<Registry> getRegistryList() {
+		return registryList;
+	}
+
+	public void setRegistryList(List<Registry> registryList) {
+		this.registryList = registryList;
 	}
 
 	public long getItemId() {

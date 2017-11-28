@@ -23,8 +23,8 @@ import com.gift.exception.RegistryNotFoundException;
 import com.gift.model.Item;
 import com.gift.model.Registry;
 import com.gift.model.User;
+import com.gift.repository.RegistryRepository;
 import com.gift.service.ItemServiceImpl;
-import com.gift.service.RegistryServiceImpl;
 import com.gift.service.UserServiceImpl;
 
 @RestController
@@ -41,25 +41,26 @@ public class MicroRegistryController {
 	private UserServiceImpl userService;
 
 	@Autowired
-	private RegistryServiceImpl registryService;
+	private RegistryRepository registryRepository;
 
 	@PostMapping("/create")
 	public Registry createRegistry(@Valid @RequestBody Set<Long> itemIds, HttpServletResponse response) {
 		logger.info("Creating the Registry");
 		logger.debug("With items " + itemIds);
-		List<Item> items = new ArrayList<Item>();
+
+		Registry registry = new Registry();
 
 		for (Long itemId : itemIds) {
-			items.add(itemService.getItemById(itemId));
+			registry.addItem(itemService.getItemById(itemId));
 		}
 
-		User admin = userService.getUserById(2);
+		User admin = userService.getUserById(5);
+
+		registry.setUser(admin);
 
 		System.out.println(admin.getEmail());
 
-		Registry registry = new Registry(1, items, admin);
-
-		Registry createdRegistry = registryService.createRegistry(registry);
+		Registry createdRegistry = registryRepository.save(registry);
 
 		/**
 		 * Sets the Created HTTP_STATUS when Vehicle is successfully Created
@@ -71,38 +72,35 @@ public class MicroRegistryController {
 	@GetMapping
 	public Collection<Registry> getAllRegistries() {
 		logger.info("Retrieving the Registries");
-		return registryService.getAllRegistries();
+		return registryRepository.findAll();
 	}
-	
+
 	@PostMapping("/add")
 	public Registry addItemsToRegistry(@Valid @RequestBody Set<Long> itemIds, HttpServletResponse response) {
 		logger.info("Adding new items to the Registry");
 		logger.debug("With item(s) " + itemIds);
 		List<Item> newItems = new ArrayList<Item>();
-		Registry temp=registryService.getRegistryById(1);
-		List<Item> oldItems= registryService.getRegistryItemList(temp);
+		Registry temp = registryRepository.findOne(1L);
+		List<Item> oldItems = temp.getRegistryItemList();
 
 		for (Long itemId : itemIds) {
-			if(oldItems.contains(itemService.getItemById(itemId)))
-			{
+			if (oldItems.contains(itemService.getItemById(itemId))) {
 				continue;
-			}
-			else
-			{
+			} else {
 				newItems.add(itemService.getItemById(itemId));
 			}
 		}
-		
+
 		oldItems.addAll(newItems);
 
 		User admin = userService.getUserById(2);
 
 		System.out.println(admin.getEmail());
 
-		Registry registry =new Registry(1, oldItems, admin);
+		Registry registry = new Registry(1, oldItems, admin);
 
-		//what about the previous items in the registry?[To be Checked..]
-		Registry updatedRegistry = registryService.updateRegistry(registry);
+		// what about the previous items in the registry?[To be Checked..]
+		Registry updatedRegistry = registryRepository.save(registry);
 
 		/**
 		 * Sets the Created HTTP_STATUS when Vehicle is successfully Created
@@ -110,36 +108,33 @@ public class MicroRegistryController {
 		response.setStatus(201);
 		return updatedRegistry;
 	}
-	
+
 	@PostMapping("/delete")
 	public Registry deleteItemsfromRegistry(@Valid @RequestBody Set<Long> itemIds, HttpServletResponse response) {
 		logger.info("Deleting items from the Registry");
 		logger.debug("With item(s) " + itemIds);
 		List<Item> newItems = new ArrayList<Item>();
-		Registry temp=registryService.getRegistryById(1);
-		List<Item> oldItems= registryService.getRegistryItemList(temp);
+		Registry temp = registryRepository.findOne(1L);
+		List<Item> oldItems = temp.getRegistryItemList();
 
 		for (Long itemId : itemIds) {
-			if(oldItems.contains(itemService.getItemById(itemId)))
-			{
+			if (oldItems.contains(itemService.getItemById(itemId))) {
 				newItems.add(itemService.getItemById(itemId));
-			}
-			else
-			{
+			} else {
 				continue;
 			}
 		}
-		
+
 		oldItems.removeAll(newItems);
 
 		User admin = userService.getUserById(2);
 
 		System.out.println(admin.getEmail());
 
-		Registry registry =new Registry(1, oldItems, admin);
+		Registry registry = new Registry(1, oldItems, admin);
 
-		//what about the previous items in the registry?[To be Checked..]
-		Registry updatedRegistry = registryService.updateRegistry(registry);
+		// what about the previous items in the registry?[To be Checked..]
+		Registry updatedRegistry = registryRepository.save(registry);
 
 		/**
 		 * Sets the Created HTTP_STATUS when Vehicle is successfully Created
@@ -147,15 +142,27 @@ public class MicroRegistryController {
 		response.setStatus(201);
 		return updatedRegistry;
 	}
-	
+
 	@GetMapping("/id/{id}")
 	public Registry getRegistry(@PathVariable long id) {
 		logger.info("Retrieving the Registry " + id);
-		Registry registry = registryService.getRegistryById(id);
+		Registry registry = registryRepository.findOne(id);
 
 		if (registry == null) {
 			throw new RegistryNotFoundException();
 		}
 		return registry;
 	}
+
+	@GetMapping("/user/{userId}")
+	public Collection<Registry> getRegistryByUserId(@PathVariable long userId) {
+		logger.info("Retrieving the Registries for user " + userId);
+		List<Registry> registries = registryRepository.getAllByUserUserId(userId);
+
+		if (registries == null) {
+			throw new RegistryNotFoundException();
+		}
+		return registries;
+	}
+
 }

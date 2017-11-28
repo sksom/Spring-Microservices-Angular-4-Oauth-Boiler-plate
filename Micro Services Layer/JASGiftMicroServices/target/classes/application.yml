@@ -19,7 +19,7 @@ server:
   port: 9090
 spring:
   datasource:
-    password: root
+    password: pass
     tomcat:
       test-while-idle: 'true'
       validationQuery: SELECT 1
