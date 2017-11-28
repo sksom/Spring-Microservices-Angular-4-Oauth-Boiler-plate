@@ -1,6 +1,7 @@
 package com.gift.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -9,14 +10,14 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToOne;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 @Entity
 public class Registry implements Serializable {
-	
+
 	private static final long serialVersionUID = 99866854751313L;
 
 	@Id
@@ -24,14 +25,14 @@ public class Registry implements Serializable {
 	@Column(name = "registry_id", nullable = false, updatable = false)
 	private long registryId;
 
-	@ManyToMany(mappedBy = "registry", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-	@JsonIgnore
-	private List<Item> registryItemList;
+	@ManyToMany
+	@JoinTable(name = "registry_item", joinColumns = { @JoinColumn(name = "fk_registry") }, inverseJoinColumns = {
+			@JoinColumn(name = "fk_item") })
+	private List<Item> registryItemList = new ArrayList<Item>();
 
 	@OneToOne(cascade = CascadeType.ALL)
-	@JsonIgnore
 	private User user;
-	
+
 	public Registry(long registryId, List<Item> registryItemList, User user) {
 		super();
 		this.registryId = registryId;
@@ -65,6 +66,15 @@ public class Registry implements Serializable {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	public void addItem(Item item) {
+		this.registryItemList.add(item);
+
+	}
+
+	public void removeItem(Item item) {
+		this.registryItemList.remove(item);
 	}
 
 }
